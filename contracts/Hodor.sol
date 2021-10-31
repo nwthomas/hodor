@@ -2,8 +2,27 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Hodor is Ownable {
+  // This is necessary to check if a given provided address supports the
+  // ERC721 interface definition. It's pulled from:
+  // https://stackoverflow.com/questions/45364197/how-to-detect-if-an-ethereum-address-is-an-erc20-token-contract
+  bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;
+  /*
+   * 0x80ac58cd ===
+   *   bytes4(keccak256('balanceOf(address)')) ^
+   *   bytes4(keccak256('ownerOf(uint256)')) ^
+   *   bytes4(keccak256('approve(address,uint256)')) ^
+   *   bytes4(keccak256('getApproved(uint256)')) ^
+   *   bytes4(keccak256('setApprovalForAll(address,bool)')) ^
+   *   bytes4(keccak256('isApprovedForAll(address,address)')) ^
+   *   bytes4(keccak256('transferFrom(address,address,uint256)')) ^
+   *   bytes4(keccak256('safeTransferFrom(address,address,uint256)')) ^
+   *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
+   */
+
   uint256 public unlockTime;
   uint256 public totalEther;
 
@@ -11,22 +30,31 @@ contract Hodor is Ownable {
   mapping(address => bool) public erc721ToIndex;
   uint256[] public erc721TokenIDs;
 
-  // TODO: Track all types of tokens and NFTs sent to contract and send them back
-  // out when requested
+  event ReceiveEther(uint256 etherAmount);
+  event TransferEther(address payableAddress, uint256 etherAmount);
+  event TransferERC20Token(
+    address payableAddress,
+    address tokenAddress,
+    uint256 tokenAmount
+  );
+  event TransferERC721Token(
+    address payableAddress,
+    address tokenAddress,
+    uint256 tokenId
+  );
 
   modifier isUnlocked() {
     require(block.timestamp >= unlockTime, "Error: Contract is locked.");
     _;
   }
 
-  event ReceiveEther(uint256 etherAmount);
-  event ReceiveToken(address tokenAddress, uint256 tokenAmount);
-  event TransferEther(address payableAddress, uint256 etherAmount);
-  event TransferToken(
-    address payableAddress,
-    address tokenAddress,
-    uint256 tokenAmount
-  );
+  modifier isValidERC721Address(address _tokenAddress) {
+    require(
+      IERC721(_tokenAddress).supportsInterface(_INTERFACE_ID_ERC721),
+      "Error: The token address does not support ERC721"
+    );
+    _;
+  }
 
   constructor(uint256 _timeToLockSeconds) payable {
     if (msg.value > 0) {
@@ -41,10 +69,6 @@ contract Hodor is Ownable {
     uint256 newEther = msg.value;
     totalEther += newEther;
     emit ReceiveEther(msg.value);
-  }
-
-  function receiveToken() external onlyOwner {
-    // TODO: Track tokens and NFTs sent
   }
 
   function retrieveEther(address _payableAddress)
@@ -62,11 +86,54 @@ contract Hodor is Ownable {
     }
   }
 
-  function retrieveToken(address _payableAddress, address _tokenAddress)
+  function retrieveERC20Tokens(address _payableAddress, address _tokenAddress)
     external
     onlyOwner
     isUnlocked
   {
-    // finish
+    uint256 amount = IERC20(_tokenAddress).balanceOf(address(this));
+
+    require(
+      amount > 0,
+      string(
+        abi.encodePacked(
+          "Error: This contract has no ERC20 tokens from ",
+          _tokenAddress,
+          "."
+        )
+      )
+    );
+
+    bool isSuccess = IERC20(_tokenAddress).transfer(_payableAddress, amount);
+    require(isSuccess, "Error: The tokens could not be transferred.");
+    emit TransferERC20Token(_payableAddress, _tokenAddress, amount);
+  }
+
+  function retriveERC721Token(
+    address _payableAddress,
+    address _tokenAddress,
+    uint256 _tokenId
+  ) external onlyOwner isUnlocked isValidERC721Address(_tokenAddress) {
+    require(
+      IERC721(_tokenAddress).balanceOf(address(this)) > 0,
+      string(
+        abi.encodePacked(
+          "Error: This contract has no ERC721 tokens from ",
+          _tokenAddress,
+          "."
+        )
+      )
+    );
+    require(
+      IERC721(_tokenAddress).ownerOf(_tokenId) == address(this),
+      "Error: This contract does not own that ERC721 token."
+    );
+
+    IERC721(_tokenAddress).safeTransferFrom(
+      address(this),
+      _payableAddress,
+      _tokenId
+    );
+    emit TransferERC721Token(_payableAddress, _tokenAddress, _tokenId);
   }
 }
