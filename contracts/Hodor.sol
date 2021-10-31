@@ -43,7 +43,7 @@ contract Hodor is Ownable {
   );
 
   modifier isUnlocked() {
-    require(block.timestamp >= unlockTimeSeconds, "Error: Contract is locked.");
+    require(block.timestamp >= unlockTimeSeconds, "Error: Contract is locked");
     _;
   }
 
@@ -88,7 +88,7 @@ contract Hodor is Ownable {
       uint256 currentTotalEther = totalEther;
       totalEther = 0;
       (bool success, ) = _payableAddress.call{ value: currentTotalEther }("");
-      require(success, "Error: Transfer failed.");
+      require(success, "Error: Transfer failed");
       emit TransferEther(_payableAddress, totalEther);
     }
   }
@@ -110,14 +110,13 @@ contract Hodor is Ownable {
       string(
         abi.encodePacked(
           "Error: This contract has no ERC20 tokens from ",
-          _tokenAddress,
-          "."
+          _tokenAddress
         )
       )
     );
 
     bool isSuccess = IERC20(_tokenAddress).transfer(_payableAddress, amount);
-    require(isSuccess, "Error: The tokens could not be transferred.");
+    require(isSuccess, "Error: The tokens could not be transferred");
     emit TransferERC20Token(_payableAddress, _tokenAddress, amount);
   }
 
@@ -137,15 +136,14 @@ contract Hodor is Ownable {
       string(
         abi.encodePacked(
           "Error: This contract has no ERC721 tokens from ",
-          _tokenAddress,
-          "."
+          _tokenAddress
         )
       )
     );
 
     require(
       IERC721(_tokenAddress).ownerOf(_tokenId) == address(this),
-      "Error: This contract does not own that ERC721 token."
+      "Error: This contract does not own that ERC721 token"
     );
 
     IERC721(_tokenAddress).safeTransferFrom(
