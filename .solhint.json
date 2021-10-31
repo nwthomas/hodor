@@ -1,7 +1,13 @@
 {
   "extends": "solhint:recommended",
+  "plugins": ["prettier"],
   "rules": {
+    "avoid-low-level-calls": "off",
+    "avoid-sha3": ["warn", { "maxLength": 50 }],
+    "avoid-suicide": "error",
     "compiler-version": ["error", "^0.8.0"],
-    "func-visibility": ["warn", { "ignoreConstructors": true }]
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "quotes": ["warn", "double"],
+    "reason-string": "off"
   }
 }

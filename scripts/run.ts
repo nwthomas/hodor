@@ -5,10 +5,6 @@ const main = async () => {
   const hodorContract = await hodorContractFactory.deploy();
   await hodorContract.deployed();
   console.log("Contract deployed to:", hodorContract.address);
-
-  const txn = await hodorContract.contributionLimit();
-  await txn.wait();
-  console.log("Contribution limit: ", txn);
 };
 
 async function runMain() {
