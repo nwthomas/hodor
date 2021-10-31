@@ -7,28 +7,51 @@ contract Hodor is Ownable {
   uint256 public unlockTime;
   uint256 public totalEther;
 
-  // TODO: Track constraints like time in order to decide when to unlock contract
+  mapping(address => uint256) public erc20TokensToAmounts;
+  mapping(address => bool) public erc721ToIndex;
+  uint256[] public erc721TokenIDs;
 
   // TODO: Track all types of tokens and NFTs sent to contract and send them back
   // out when requested
 
-  event TransferEther(address payableAddress, uint256 etherAmount);
-
-  constructor() payable {
-    totalEther += msg.value;
+  modifier isUnlocked() {
+    require(block.timestamp >= unlockTime, "Error: Contract is locked.");
+    _;
   }
 
-  receive() external payable onlyOwner {
+  event ReceiveEther(uint256 etherAmount);
+  event ReceiveToken(address tokenAddress, uint256 tokenAmount);
+  event TransferEther(address payableAddress, uint256 etherAmount);
+  event TransferToken(
+    address payableAddress,
+    address tokenAddress,
+    uint256 tokenAmount
+  );
+
+  constructor(uint256 _timeToLockSeconds) payable {
+    if (msg.value > 0) {
+      totalEther += msg.value;
+      emit ReceiveEther(msg.value);
+    }
+
+    unlockTime = block.timestamp + _timeToLockSeconds;
+  }
+
+  receive() external payable {
     uint256 newEther = msg.value;
     totalEther += newEther;
+    emit ReceiveEther(msg.value);
+  }
 
+  function receiveToken() external onlyOwner {
     // TODO: Track tokens and NFTs sent
   }
 
-  function retrieveValuables(address _payableAddress)
+  function retrieveEther(address _payableAddress)
     external
     payable
     onlyOwner
+    isUnlocked
   {
     if (totalEther > 0) {
       uint256 currentTotalEther = totalEther;
@@ -37,7 +60,13 @@ contract Hodor is Ownable {
       require(success, "Error: Transfer failed.");
       emit TransferEther(_payableAddress, totalEther);
     }
+  }
 
-    // TODO: Transfer any tokens and NFT owned by contract
+  function retrieveToken(address _payableAddress, address _tokenAddress)
+    external
+    onlyOwner
+    isUnlocked
+  {
+    // finish
   }
 }
