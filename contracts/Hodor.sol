@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 /// @author Nathan Thomas
 /// @notice This contract is not audited - USE AT YOUR OWN RISK!
 contract Hodor is Ownable {
-  // This is necessary to check if a given provided address supports the
-  // ERC721 interface definition. It's pulled from:
+  // This is necessary to check if a given provided address supports the ERC721 interface
+  // definition. It's pulled from:
   // https://stackoverflow.com/questions/45364197/how-to-detect-if-an-ethereum-address-is-an-erc20-token-contract
   bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;
   /*
