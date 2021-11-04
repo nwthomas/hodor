@@ -4,7 +4,15 @@
   "description": "A smart contract for holding all Ether, ERC20, and ERC721 tokens until a predefined date or event",
   "main": "/contracts",
   "scripts": {
-    "test": "test"
+    "compile": "npx hardhat compile",
+    "coverage": "npx hardhat coverage",
+    "deploy-local": "npx hardhat run scripts/deploy.js --network localhost",
+    "deploy-rinkeby": "npx hardhat run scripts/deploy.js --network rinkeby",
+    "lint:sol": "./node_modules/.bin/solhint -f table contracts/**/*.sol",
+    "lint:ts": "eslint --config ./.eslintrc.json --ignore-path ./.eslintignore --ext .js,.ts .",
+    "start": "npx hardhat run scripts/run.ts",
+    "server": "npx hardhat node",
+    "test": "npx hardhat test"
   },
   "repository": {
     "type": "git",
@@ -53,6 +61,7 @@
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "^1.0.0-beta.13",
     "solhint": "^3.3.6",
+    "solhint-plugin-prettier": "^0.0.5",
     "solidity-coverage": "^0.7.16",
     "ts-node": "^10.1.0",
     "typechain": "^5.1.2",

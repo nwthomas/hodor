@@ -10,8 +10,6 @@ contract MockERC721 is ERC721 {
 
   event NewMockERC721TokenMinted(address sender, uint256 tokenIds);
 
-  string private constant NFT_STRING = "This is a mock NFT";
-
   constructor() ERC721("Mock NFT", "Test") {}
 
   function mintNFT() public {
