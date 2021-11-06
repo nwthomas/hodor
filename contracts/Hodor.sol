@@ -84,13 +84,13 @@ contract Hodor is Ownable {
     onlyOwner
     isUnlocked
   {
-    if (totalEther > 0) {
-      uint256 currentTotalEther = totalEther;
-      totalEther = 0;
-      (bool success, ) = _payableAddress.call{ value: currentTotalEther }("");
-      require(success, "Error: Transfer failed");
-      emit TransferEther(_payableAddress, totalEther);
-    }
+    require(totalEther > 0, "Error: No ether in contract");
+
+    uint256 currentTotalEther = totalEther;
+    totalEther = 0;
+    (bool success, ) = _payableAddress.call{ value: currentTotalEther }("");
+    require(success, "Error: Transfer failed");
+    emit TransferEther(_payableAddress, currentTotalEther);
   }
 
   /// @notice Allows the owner to retrieve all ERC20 tokens to a specified payable wallet
