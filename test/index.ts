@@ -13,18 +13,15 @@ describe("Hodor", () => {
 
   const getDeployedContract = async (
     contractName: string = "Hodor",
-    maximumContribution: number = 10 ** 18,
-    minimumContribution: number = ethers.utils.parseEther("0.1").toNumber(),
-    maximumContributors: number = 100
+    timeToLockSeconds: number = 10000,
+    initialEtherSent?: ReturnType<typeof ethers.utils.parseEther>
   ) => {
-    const EthDistributor = await ethers.getContractFactory(contractName);
-    const ethDistributor = await EthDistributor.deploy(
-      maximumContribution,
-      minimumContribution,
-      maximumContributors
-    );
+    const HodorContractFactory = await ethers.getContractFactory(contractName);
+    const hodorContract = await HodorContractFactory.deploy(timeToLockSeconds, {
+      value: initialEtherSent,
+    });
 
-    return ethDistributor;
+    return hodorContract;
   };
 
   beforeEach(async () => {
@@ -36,7 +33,38 @@ describe("Hodor", () => {
   });
 
   describe("constructor", () => {
-    // finish
+    it("instantiates a new Hodor contract with provided values", async () => {
+      const deployTimeSeconds = Date.now();
+      await ethers.provider.send("evm_setNextBlockTimestamp", [
+        deployTimeSeconds,
+      ]);
+
+      const additionalUnlockTimeSeconds = 100;
+      const hodor = await getDeployedContract(
+        "Hodor",
+        additionalUnlockTimeSeconds
+      );
+      await ethers.provider.send("evm_mine", []);
+
+      const unlockTimeSeconds = await hodor.unlockTimeSeconds();
+      expect(unlockTimeSeconds).to.equal(
+        deployTimeSeconds + additionalUnlockTimeSeconds
+      );
+    });
+
+    it("defines the owner on instantiation", async () => {
+      const hodor = await getDeployedContract("Hodor");
+      const contractOwner = await hodor.owner();
+      expect(contractOwner).to.equal(ownerAddress.address);
+    });
+
+    it("allows contribution of ether by owner during instantiation", async () => {
+      const initialEtherSent = ethers.utils.parseEther("0.1");
+      const hodor = await getDeployedContract("Hodor", 1, initialEtherSent);
+
+      const currentContractBalance = await hodor.totalEther();
+      expect(currentContractBalance).to.equal(initialEtherSent);
+    });
   });
 
   describe("contributing ether", () => {
